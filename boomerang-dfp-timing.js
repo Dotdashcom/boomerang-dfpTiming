@@ -54,6 +54,7 @@ var impl = {
 		5 : "gpt-slot_rendering",
 		6 : "gpt-slot_rendered"
 	},
+
 	readCachedEvents: function() {
 		var w = BOOMR.window,
 			eventCache = w.dfpEventCache || {},
@@ -71,31 +72,15 @@ var impl = {
 				}
 			}
 
-	},
-	attachEvents: function() {
-		var w = BOOMR.window,
-			gtag = w.googletag;
-
-		if (this.complete) {
-			return this;
-		}
-
-		gtag.cmd.push(function() {
-			gtag.on(impl.dfpEvents.join(" "), function(e,level,message,service,slot,reference) {
-				var messageName = impl.dfpEventMap[message.getMessageId()],
-					timestamp = (new Date()).getTime(),
-					slotId = slot? slot.getSlotId().getId() : "undefined";
-					impl.recordEvent(messageName, timestamp, slotId);
-			});
-		});
+			impl.done();
 
 	},
 
 	// Process event and store in appropriate data slot
 	recordEvent: function(messageName, timestamp, slotId) {
 		if (slotId != "undefined") {
-			if (impl.dfpSlots[slotId] && impl.dfpSlots[slotId]["is_rendered"]) {
-				// Slot has fully rendered, any timing information for this slot is based on a refresh
+			if (impl.dfpSlots[slotId] && impl.dfpSlots[slotId][messageName]) {
+				// Already recorded this message to the original slot rendering; this is now should be recorded as a refreshed item
 				var refreshObj = {};
 				if (!impl.refreshSlots[slotId]) {
 					refreshObj[messageName] = timestamp;
@@ -104,27 +89,28 @@ var impl = {
 					return;
 				}
 
-				// Loop backwards through array associated with this slotId to see if the event has been triggered already
-				for (var i = impl.refreshSlots[slotId].length - 1; i >= 0; i--) {
-					if (impl.refreshSlots[slotId][i]["gpt-slot_rendered"]) {
-						refreshObj[messageName] = timestamp;
-						impl.refreshSlots[slotId].push(refreshObj);
-						break;
-					} else if (impl.refreshSlots[slotId][i][messageName]) {
-						continue;
+				// Loop through array associated with this slotId to see if the event has been recorded already
+				for (var i = 0; i < impl.refreshSlots[slotId].length; i++) {
+					// Event has been recorded in this refresh already
+					if (impl.refreshSlots[slotId][i][messageName]) {
+						// If there are more refresh items, continue
+						if (impl.refreshSlots[slotId][i+1]) {
+							continue;
+						} else {
+							// Create new refresh object and break out of loop
+							refreshObj[messageName] = timestamp;
+							impl.refreshSlots[slotId].push(refreshObj);
+							break;
+						}
 					} else {
+						// Event has not been recorded yet, add
 						impl.refreshSlots[slotId][i][messageName] = timestamp;
-						break;
 					}
 				}
 			} else {
 				
 				if (!impl.dfpSlots[slotId]) {
 					impl.dfpSlots[slotId] = {};
-				}
-
-				if (messageName == "gpt-slot_rendered") {
-					impl.dfpSlots[slotId]["is_rendered"] = true;
 				}
 
 				impl.dfpSlots[slotId][messageName] = timestamp;
@@ -152,7 +138,7 @@ var impl = {
 			if (impl.dfpSlots.hasOwnProperty(key)) {
 				var tempInnerObj = {};
 				for (var k in impl.dfpSlots[key]) {
-					if (impl.dfpSlots[key].hasOwnProperty(k) && k != "is_rendered") {
+					if (impl.dfpSlots[key].hasOwnProperty(k)) {
 						var keyName = k.toString();
 						tempInnerObj[keyName] = impl.dfpSlots[key][k];
 					}
@@ -196,12 +182,12 @@ BOOMR.plugins.DFPTiming = {
 		BOOMR.utils.pluginConfig(impl, config, "DFPTiming", []);
 
 		// Send beacon at page unload
-		BOOMR.subscribe("before_unload", impl.done, null, impl);
+		BOOMR.subscribe("before_unload", impl.readCachedEvents, null, impl);
 		
 		// If sending timeout value to config, call done() when timeout expires
 		if (config.DFPTiming.timeout) {
 			setTimeout(function() {
-				impl.done();
+				impl.readCachedEvents();
 			}, config.DFPTiming.timeout);
 		}
 
@@ -209,16 +195,6 @@ BOOMR.plugins.DFPTiming = {
 		if (config.DFPTiming.events && config.DFPTiming.events.length > 0) {
 			impl.dfpEvents = config.DFPTiming.events;
 		}
-
-		if (!impl.initialized) {
-			// Read any cached events that fired before boomerang loaded
-			impl.readCachedEvents();
-
-			// Add googletag event listeners to record timing for any subsequent events
-			impl.attachEvents();
-		}
-
-		impl.initialized = true;
 
 		return this;
 	},
