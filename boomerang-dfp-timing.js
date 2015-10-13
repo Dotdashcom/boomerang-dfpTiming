@@ -54,6 +54,24 @@ var impl = {
 		5 : "gpt-slot_rendering",
 		6 : "gpt-slot_rendered"
 	},
+	readCachedEvents: function() {
+		var w = BOOMR.window,
+			eventCache = w.dfpEventCache || {},
+			messageName;
+
+			for (var key in eventCache) {
+				if (eventCache.hasOwnProperty(key)) {
+					messageName = impl.dfpEventMap[key];
+					for (var l = 0; l < eventCache[key].length; l++) {
+						var timestamp = eventCache[key][l]["timestamp"],
+							slot = eventCache[key][l]["slot"]
+							slotId = slot? slot.getSlotId().getId() : "undefined";
+						impl.recordEvent(messageName, timestamp, slotId);
+					}
+				}
+			}
+
+	},
 	attachEvents: function() {
 		var w = BOOMR.window,
 			gtag = w.googletag;
@@ -67,51 +85,56 @@ var impl = {
 				var messageName = impl.dfpEventMap[message.getMessageId()],
 					timestamp = (new Date()).getTime(),
 					slotId = slot? slot.getSlotId().getId() : "undefined";
-					if (slotId != "undefined") {
-						if (impl.dfpSlots[slotId] && impl.dfpSlots[slotId]["is_rendered"]) {
-							// Slot has fully rendered, any timing information for this slot is based on a refresh
-							var refreshObj = {};
-							if (!impl.refreshSlots[slotId]) {
-								refreshObj[messageName] = timestamp;
-								impl.refreshSlots[slotId] = [];
-								impl.refreshSlots[slotId].push(refreshObj);
-								return;
-							}
-
-							// Loop backwards through array associated with this slotId to see if the event has been triggered already
-							for (var i = impl.refreshSlots[slotId].length - 1; i >= 0; i--) {
-								if (impl.refreshSlots[slotId][i]["gpt-slot_rendered"]) {
-									refreshObj[messageName] = timestamp;
-									impl.refreshSlots[slotId].push(refreshObj);
-									break;
-								} else if (impl.refreshSlots[slotId][i][messageName]) {
-									continue;
-								} else {
-									impl.refreshSlots[slotId][i][messageName] = timestamp;
-									break;
-								}
-							}
-						} else {
-							
-							if (!impl.dfpSlots[slotId]) {
-								impl.dfpSlots[slotId] = {};
-							}
-
-							if (messageName == "gpt-slot_rendered") {
-								impl.dfpSlots[slotId]["is_rendered"] = true;
-							}
-
-							impl.dfpSlots[slotId][messageName] = timestamp;
-						}
-					} else if (messageName == "gpt-slot_fill") {
-						// Exclude this event from timing record, as it has no useful slot information
-						return;
-					} else {
-						impl.dfpData[messageName] = timestamp;
-					}
+					impl.recordEvent(messageName, timestamp, slotId);
 			});
 		});
 
+	},
+
+	// Process event and store in appropriate data slot
+	recordEvent: function(messageName, timestamp, slotId) {
+		if (slotId != "undefined") {
+			if (impl.dfpSlots[slotId] && impl.dfpSlots[slotId]["is_rendered"]) {
+				// Slot has fully rendered, any timing information for this slot is based on a refresh
+				var refreshObj = {};
+				if (!impl.refreshSlots[slotId]) {
+					refreshObj[messageName] = timestamp;
+					impl.refreshSlots[slotId] = [];
+					impl.refreshSlots[slotId].push(refreshObj);
+					return;
+				}
+
+				// Loop backwards through array associated with this slotId to see if the event has been triggered already
+				for (var i = impl.refreshSlots[slotId].length - 1; i >= 0; i--) {
+					if (impl.refreshSlots[slotId][i]["gpt-slot_rendered"]) {
+						refreshObj[messageName] = timestamp;
+						impl.refreshSlots[slotId].push(refreshObj);
+						break;
+					} else if (impl.refreshSlots[slotId][i][messageName]) {
+						continue;
+					} else {
+						impl.refreshSlots[slotId][i][messageName] = timestamp;
+						break;
+					}
+				}
+			} else {
+				
+				if (!impl.dfpSlots[slotId]) {
+					impl.dfpSlots[slotId] = {};
+				}
+
+				if (messageName == "gpt-slot_rendered") {
+					impl.dfpSlots[slotId]["is_rendered"] = true;
+				}
+
+				impl.dfpSlots[slotId][messageName] = timestamp;
+			}
+		} else if (messageName == "gpt-slot_fill") {
+			// Exclude this event from timing record, as it has no useful slot information
+			return;
+		} else {
+			impl.dfpData[messageName] = timestamp;
+		}
 	},
 
 	done: function() {
@@ -188,7 +211,10 @@ BOOMR.plugins.DFPTiming = {
 		}
 
 		if (!impl.initialized) {
-			// Add googletag event listeners to record timing
+			// Read any cached events that fired before boomerang loaded
+			impl.readCachedEvents();
+
+			// Add googletag event listeners to record timing for any subsequent events
 			impl.attachEvents();
 		}
 
