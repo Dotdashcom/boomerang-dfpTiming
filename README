@@ -1,29 +1,29 @@
-	This plugin ties into the dfp-events library that allows you to listen in on dfp's logger function and will send 
-	back timing data associated with those events.  For the plugin to work, you must include this library in your codebase,
-	somewhere before you initialize this pluign and boomerang:
+This plugin ties into the dfp-events library that allows you to listen in on dfp's logger function and will send back timing data associated with those events.
 
-	https://github.com/mcountis/dfp-events
+For the plugin to work, you must include this library in your codebase, somewhere before you initialize this pluign and boomerang:
 
-	Config options:
-		To initialize, the plugin assumes you pass an object similar to this:
-		BOOMR.init({
-			DFPTiming: {
-				// CONFIG ITEMS WOULD GO HERE
-				events: [			// A list of the events you want to listen to, drawn from dfp-events plugin; if none are supplied, will default to listen to all events
-						"gpt-slot_fill",
-						"gpt-slot_fetch",
-						"gpt-slot_receiving",
-						"gpt-slot_render_delay",
-						"gpt-slot_rendering",
-						"gpt-slot_rendered"
-				]
-			}
-		});
+https://github.com/mcountis/dfp-events
 
-		Configurable items:
-			events
-				Optional. This is an array of strings with the names of the GPT events you want to listen to.  If not specified,
-				the plugin will default to listening to all gpt events.
-			timeout
-				Optional.  This should be provided as a number in milliseconds to wait before sending the beacon.  If not provided,
-				the plugin will send a beacon at page_unload.
+Config options:
+	To initialize, the plugin assumes you pass an object similar to this:
+	BOOMR.init({
+		DFPTiming: {
+			// CONFIG ITEMS WOULD GO HERE
+			events: [			// A list of the events you want to listen to, drawn from dfp-events plugin; if none are supplied, will default to listen to all events
+					"gpt-slot_fill",
+					"gpt-slot_fetch",
+					"gpt-slot_receiving",
+					"gpt-slot_render_delay",
+					"gpt-slot_rendering",
+					"gpt-slot_rendered"
+			]
+		}
+	});
+
+Configurable items:
+	events
+		Optional. This is an array of strings with the names of the GPT events you want to listen to.  If not specified,
+		the plugin will default to listening to all gpt events.
+	timeout
+		Optional.  This should be provided as a number in milliseconds to wait before sending the beacon.  If not provided,
+		the plugin will send a beacon at page_unload.
