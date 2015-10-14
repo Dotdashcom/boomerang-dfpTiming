@@ -1,8 +1,11 @@
 This plugin ties into the dfp-events library that allows you to listen in on dfp's logger function and will send back timing data associated with those events.
 
-For the plugin to work, you must include this library in your codebase, somewhere before you initialize this pluign and boomerang:
+To use the plugin, you need to include the dfp-events library in your codebase, and dfp.events.caching.js afterwards.
+The repo for dfp-events can be found here: https://github.com/mcountis/dfp-events
 
-https://github.com/mcountis/dfp-events
+It is recommended to include those two files in the head of your page in order to begin capturing GPT events as soon as possible.
+
+Then just include the path to boomerang.dfp.timing.js along with your other boomerang plugins in your Gruntfile for boomerang.
 
 Config options:
   To initialize, the plugin assumes you pass an object similar to this:
