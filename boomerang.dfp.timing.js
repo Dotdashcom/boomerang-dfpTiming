@@ -1,5 +1,5 @@
 /**
-\file boomerang-dfp-timing.js
+\file boomerangDfpTiming.js
 */
 
 (function(w) {
