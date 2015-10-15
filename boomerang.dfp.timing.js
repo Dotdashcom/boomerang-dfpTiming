@@ -63,9 +63,10 @@ var impl = {
 			for (var key in eventCache) {
 				if (eventCache.hasOwnProperty(key)) {
 					messageName = impl.dfpEventMap[key];
-					for (var l = 0; l < eventCache[key].length; l++) {
-						var timestamp = eventCache[key][l]["timestamp"],
-							slot = eventCache[key][l]["slot"]
+					evt = eventCache[key];
+					for (var l = 0; l < evt.length; l++) {
+						var timestamp = evt[l]["timestamp"],
+							slot = evt[l]["slot"]
 							slotId = slot? slot.getSlotId().getId() : "undefined";
 						impl.recordEvent(messageName, timestamp, slotId);
 					}
