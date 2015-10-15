@@ -58,7 +58,8 @@ var impl = {
 	readCachedEvents: function() {
 		var w = BOOMR.window,
 			eventCache = w.dfpEventCache || {},
-			messageName;
+			messageName,
+			evt;
 
 			for (var key in eventCache) {
 				if (eventCache.hasOwnProperty(key)) {
@@ -140,8 +141,7 @@ var impl = {
 				var tempInnerObj = {};
 				for (var k in impl.dfpSlots[key]) {
 					if (impl.dfpSlots[key].hasOwnProperty(k)) {
-						var keyName = k.toString();
-						tempInnerObj[keyName] = impl.dfpSlots[key][k];
+						tempInnerObj[k] = impl.dfpSlots[key][k];
 					}
 				}
 				tempInnerObj["slot_id"] = key;
