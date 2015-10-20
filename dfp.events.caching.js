@@ -6,23 +6,24 @@
 		window.googletag = window.googletag || {};
 		window.googletag.cmd = window.googletag.cmd || [];
 
-	googletag.on(dfpEvents.join(" "), function(e,level,message,service,slot,reference) {
-		var timestamp = (new Date()).getTime(),
-			messageId = message.getMessageId()
-			eventObj = {
-				e: e,
-				level: level,
-				message: message,
-				service: service,
-				slot: slot,
-				reference: reference,
-				timestamp: timestamp
-			};
+	googletag.cmd.push(function() {
+		googletag.on(dfpEvents.join(" "), function(e,level,message,service,slot,reference) {
+			var timestamp = (new Date()).getTime(),
+				messageId = message.getMessageId()
+				eventObj = {
+					e: e,
+					level: level,
+					message: message,
+					service: service,
+					slot: slot,
+					reference: reference,
+					timestamp: timestamp
+				};
 
-			if (!dfpEventCache[messageId]) {
-				dfpEventCache[messageId] = [];
-			}
-			dfpEventCache[messageId].push(eventObj);
+				if (!dfpEventCache[messageId]) {
+					dfpEventCache[messageId] = [];
+				}
+				dfpEventCache[messageId].push(eventObj);
+		});
 	});
-
 })();
