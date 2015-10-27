@@ -1,0 +1,14 @@
+{
+	"name": "boomerang-dfpTiming",
+	"authors": [
+		"Joe Boland <jboland@happyfuncorp.com>"
+	],
+	"description": "Boomerang plugin for timing DFP events",
+	"ignore": [
+		"bower_components",
+		"node_modules"
+	],
+	"dependencies": {
+		"dfp-events": "https://github.com/mcountis/dfp-events.git#master"
+	}
+}
