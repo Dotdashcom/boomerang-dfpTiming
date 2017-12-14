@@ -1,5 +1,6 @@
 {
   "name": "boomerang-dfpTiming",
+  "version": "1.0.1",
   "dependencies": {},
   "devDependencies": {
     "grunt-contrib-concat": "~0.3.0",
